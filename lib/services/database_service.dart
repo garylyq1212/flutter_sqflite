@@ -24,6 +24,9 @@ class DatabaseService {
         if (oldVersion < newVersion) {
           log('EXECUTE UPGRADE');
           await db.execute("ALTER TABLE Test ADD COLUMN name TEXT");
+
+          // Cannot add the same column
+          // await db.execute("ALTER TABLE Test ADD COLUMN name TEXT");
         }
       },
     );

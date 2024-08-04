@@ -12,7 +12,7 @@ class DatabaseService {
 
     _database = await openDatabase(
       path,
-      version: 6,
+      version: 3,
       onCreate: (db, version) async {
         await db
             .execute("CREATE TABLE Test (id INTEGER PRIMARY KEY, value TEXT)");
@@ -21,12 +21,17 @@ class DatabaseService {
         log("DB_SERVICE: $newVersion");
 
         // Old version will also increment when the version is upgraded
-        if (oldVersion < newVersion) {
-          log('EXECUTE UPGRADE');
+        if (oldVersion != 2) {
+          log('EXECUTE UPGRADE $newVersion');
           await db.execute("ALTER TABLE Test ADD COLUMN name TEXT");
 
           // Cannot add the same column
           // await db.execute("ALTER TABLE Test ADD COLUMN name TEXT");
+        }
+
+        if (oldVersion != 3) {
+          log('EXECUTE UPGRADE $newVersion');
+          await db.execute("ALTER TABLE Test ADD COLUMN count INTEGER");
         }
       },
     );

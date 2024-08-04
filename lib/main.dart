@@ -14,16 +14,6 @@ void main() async {
   try {
     db = await getIt.get<DatabaseService>().initDatabase();
     log("DB: ${await db?.database.getVersion()}");
-
-    await db?.insert(
-      "Test",
-      {
-        "id": 1,
-        "value": "Test Value",
-        "name": "John Doe",
-      },
-      conflictAlgorithm: ConflictAlgorithm.rollback,
-    );
   } catch (e) {
     log("ERROR: $e");
   }
@@ -71,12 +61,31 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  List<Map<String, Object?>>? maps;
 
   void _incrementCounter() async {
-    log("DB_TABLE: ${await widget.db?.query("Test")}");
     setState(() {
       _counter++;
     });
+
+    await widget.db?.insert(
+      "Test",
+      {
+        "value": "Test Value $_counter",
+        "name": "John Doe",
+        "count": "$_counter",
+      },
+      conflictAlgorithm: ConflictAlgorithm.rollback,
+    );
+
+    _getData();
+
+    log("DB_TABLE: $maps");
+  }
+
+  Future<void> _getData() async {
+    maps = await widget.db?.query("Test");
+    setState(() {});
   }
 
   @override
@@ -86,18 +95,37 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              ElevatedButton(
+                onPressed: _getData,
+                child: const Text('Get Data'),
+              ),
+              const Text(
+                'You have pushed the button this many times:',
+              ),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: maps?.length ?? 0,
+                itemBuilder: (context, index) {
+                  if (maps == null || (maps ?? []).isEmpty) {
+                    return const Text('NO DATA!');
+                  }
+
+                  return Center(
+                    child: Text(
+                      '${maps?[index]['value'] ?? ''}, ${maps?[index]['name'] ?? ''}, ${maps?[index]['count'] ?? ''}',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
